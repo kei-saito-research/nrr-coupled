@@ -18,7 +18,7 @@ NRR optimizes when to commit and when to defer, under explicit conditions.
 - reproducibility guide: `reproducibility.md`
 
 ## DOI
-- Pending (pre-submission; Zenodo DOI will be added after release archival)
+- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18814806.svg)](https://doi.org/10.5281/zenodo.18814806)
 
 ## Repository structure
 
