@@ -1,0 +1,27 @@
+{
+  "config": {
+    "alpha": 0.08,
+    "conv_eps": 0.12,
+    "beta_levels": [
+      0.1,
+      0.3,
+      0.5
+    ],
+    "conditions": [
+      "D-dependent",
+      "D-independent",
+      "D-mismatch"
+    ],
+    "patterns": [
+      "P1-n4",
+      "P2-n5",
+      "P3-n6"
+    ]
+  },
+  "contract": {
+    "success_1_dep_gain_beta_0_3": true,
+    "success_2_indep_non_degrade_beta_0_3": true,
+    "success_3_dep_osc_rate_beta_0_3": false,
+    "all_indep_equivalence_pass": true
+  }
+}
