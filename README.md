@@ -17,6 +17,9 @@ NRR optimizes when to commit and when to defer, under explicit conditions.
 - simulation: `repro/coupled_state_sim.py`
 - reproducibility guide: `reproducibility.md`
 
+## DOI
+- Pending (pre-submission; Zenodo DOI will be added after release archival)
+
 ## Repository structure
 
 ```text
