@@ -1,4 +1,4 @@
-# NRR-Coupled (cp) Specification v6
+# NRR-Coupled (cp) Specification v7
 
 ## 0. Scope and Boundary
 - `cp = NRR-Coupled`

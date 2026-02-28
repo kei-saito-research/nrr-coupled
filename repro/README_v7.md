@@ -1,12 +1,12 @@
-# NRR-Coupled v6 Reproducibility (Dependency-Consistency Protocol)
+# NRR-Coupled v7 Reproducibility (Dependency-Consistency Protocol)
 
 ## Scope
-This v6 protocol reproduces:
-- `manuscript/paper6-nrr-coupled-v6.tex`
-- `spec/nrr-coupled_spec_v6.md`
+This v7 protocol reproduces:
+- `manuscript/paper6-nrr-coupled-v7.tex`
+- `spec/nrr-coupled_spec_v7.md`
 - `repro/coupled_state_sim.py`
 
-v6 key policy:
+v7 key policy:
 - No coupled-generated target references for scoring.
 - Evaluate by dependency consistency and repair cost.
 
@@ -15,7 +15,7 @@ v6 key policy:
 - TeX engine: `tectonic` (or `pdflatex`)
 - No external Python package required
 
-## 1) Run v6 simulation
+## 1) Run v7 simulation
 
 ```bash
 cd /Users/saitokei/Documents/New\ project/nrr-coupled
@@ -47,15 +47,15 @@ See `cp_consistency_report.json` flags:
 - `success_independent_non_degrade_beta_0_3`
 - `all_indep_equivalence_pass`
 
-## 4) Build v6 PDF
+## 4) Build v7 PDF
 
 ```bash
 cd manuscript
-tectonic -X compile paper6-nrr-coupled-v6.tex
+tectonic -X compile paper6-nrr-coupled-v7.tex
 ```
 
 Expected output:
-- `manuscript/paper6-nrr-coupled-v6.pdf`
+- `manuscript/paper6-nrr-coupled-v7.pdf`
 
 Interpretation notes:
 - In `D-independent`, `A_eval=0` so violation opportunities are zero; use
