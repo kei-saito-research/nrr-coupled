@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NRR-Coupled v4 robust simulation.
+"""NRR-Coupled v5 robust simulation.
 
 Design goals:
 - Remove tautological reference trajectory dependence.
@@ -340,7 +340,7 @@ def parse_levels(s: str) -> List[float]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="NRR-Coupled v4 dependency-consistency simulation")
+    parser = argparse.ArgumentParser(description="NRR-Coupled v5 dependency-consistency simulation")
     parser.add_argument("--turns", type=int, default=12)
     parser.add_argument("--num-streams", type=int, default=15)
     parser.add_argument("--alpha", type=float, default=0.10)
@@ -530,7 +530,7 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
 
     write_csv(
-        outdir / "cp_v4_per_turn.csv",
+        outdir / "cp_v5_per_turn.csv",
         per_turn_rows,
         fieldnames=[
             "pattern",
@@ -549,7 +549,7 @@ def main() -> None:
         ],
     )
     write_csv(
-        outdir / "cp_v4_summary.csv",
+        outdir / "cp_v5_summary.csv",
         summary_rows,
         fieldnames=[
             "pattern",
@@ -565,7 +565,7 @@ def main() -> None:
         ],
     )
     write_csv(
-        outdir / "cp_v4_pairwise.csv",
+        outdir / "cp_v5_pairwise.csv",
         pair_rows,
         fieldnames=[
             "pattern",
@@ -578,7 +578,7 @@ def main() -> None:
         ],
     )
     write_csv(
-        outdir / "cp_v4_aggregate.csv",
+        outdir / "cp_v5_aggregate.csv",
         agg_rows,
         fieldnames=[
             "condition",
@@ -597,7 +597,7 @@ def main() -> None:
         ],
     )
     write_csv(
-        outdir / "cp_v4_independent_check.csv",
+        outdir / "cp_v5_independent_check.csv",
         indep_rows,
         fieldnames=["pattern", "stream_id", "stream_seed", "beta", "max_abs_diff", "tol", "pass"],
     )
@@ -614,7 +614,7 @@ def main() -> None:
         },
         "contract": contract,
     }
-    with (outdir / "cp_v4_report.json").open("w", encoding="utf-8") as f:
+    with (outdir / "cp_v5_report.json").open("w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
     print(json.dumps(payload, indent=2))
