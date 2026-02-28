@@ -1,59 +1,67 @@
-# NRR-Coupled Reproducibility Steps (v1)
+# NRR-Coupled Reproducibility (Dependency-Consistency Protocol)
 
 ## Scope
-This reproducibility note covers the cp definition and falsifiable evaluation harness in:
-- `manuscript/current/paper6-nrr-coupled-v1.tex`
-- `spec/nrr-coupled_spec_v1.md`
+This guide reproduces:
+- `manuscript/paper6-nrr-coupled-v12.tex`
+- `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
 
+Key policy:
+- No coupled-generated target references for scoring.
+- Evaluate by dependency consistency and repair cost.
+
 ## Environment
-- Python: 3.10+
-- LaTeX: `pdflatex`
-- No external Python package is required.
+- Python 3.10+
+- TeX engine: `tectonic` (or `pdflatex`)
+- No external Python package required
 
-## 1) Run synthetic paired evaluation
-From repository root:
-
-```bash
-cd /Users/saitokei/Documents/New\ project/nrr-coupled
-python3 repro/coupled_state_sim.py \
-  --seeds 30 \
-  --n 6 \
-  --turns 60 \
-  --alpha 0.08 \
-  --beta 0.6 \
-  --output repro/repro_summary.json
-```
-
-Expected artifact:
-- `repro/repro_summary.json`
-
-Interpretation:
-- `summary.D-dependent.u_diff_cp_minus_base` corresponds to Success-1.
-- `summary.D-independent.u_diff_cp_minus_base` corresponds to Success-2.
-- `summary.D-dependent.osc_rate_cp` corresponds to Success-3.
-- `contract.overall_pass` is true only when all pre-registered criteria pass.
-
-## 2) Build manuscript PDF
+## 1) Run simulation
 
 ```bash
-cd /Users/saitokei/Documents/New\ project/nrr-coupled/manuscript/current
-pdflatex -interaction=nonstopmode paper6-nrr-coupled-v1.tex
-pdflatex -interaction=nonstopmode paper6-nrr-coupled-v1.tex
+cd <nrr-coupled-root>
+python3 repro/coupled_state_sim.py --outdir repro/results
 ```
 
-Expected artifact:
-- `manuscript/current/paper6-nrr-coupled-v1.pdf`
+Default settings:
+- turns: `12`
+- streams/pattern: `15`
+- patterns: `P1-n4`, `P2-n5`, `P3-n6`
+- beta levels: `0.1,0.3,0.5`
+- seed base: `20260228`
 
-## 3) Guardrail alignment checks
-- Uncoupled baseline definition is inherited from Transfer (not redefined in cp).
-- cp adds only coupled propagation, complexity bounds, and falsifiable evaluation contract.
-- LLM interface assumption remains fixed (`sigma/delta` selection unchanged).
-- If interface mismatch occurs, mark `TRANSFER_PRINCIPLES_REEVAL_REQUIRED=true`.
+## 2) Outputs
+- `repro/results/cp_consistency_per_turn.csv`
+- `repro/results/cp_consistency_summary.csv`
+- `repro/results/cp_consistency_pairwise.csv`
+- `repro/results/cp_consistency_aggregate.csv`
+- `repro/results/cp_consistency_independent_check.csv`
+- `repro/results/cp_consistency_report.json`
 
-## 4) Optional quick sanity loop
+`cp_consistency_aggregate.csv` includes mean/sd/min/max over all streams.
+
+## 3) Contract checks
+See `cp_consistency_report.json` flags:
+- `success_dep_violation_reduction_beta_0_3`
+- `success_dep_repair_reduction_beta_0_3`
+- `success_mismatch_penalty_beta_0_3`
+- `success_independent_non_degrade_beta_0_3`
+- `all_indep_equivalence_pass`
+
+## 4) Build PDF
 
 ```bash
-python3 repro/coupled_state_sim.py --seeds 10 --output /tmp/cp_quick.json
-cat /tmp/cp_quick.json
+cd manuscript
+tectonic -X compile paper6-nrr-coupled-v12.tex
 ```
+
+Expected output:
+- `manuscript/paper6-nrr-coupled-v12.pdf`
+
+Interpretation notes:
+- In `D-independent`, `A_eval=0` so violation opportunities are zero; use
+  `cp_consistency_independent_check.csv` equality checks for substantive confirmation.
+- Zero-movement under clipping saturation is conservatively counted as violation.
+- Repair uses cap `max_repair_ops=30`; cap hits can understate mismatch degradation.
+
+## 5) Note
+Transfer/Principles are not edited in this cp workflow.
