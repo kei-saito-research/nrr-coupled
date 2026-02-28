@@ -4,7 +4,11 @@ NRR-Coupled (cp) is a client-side extension for dependent-candidate state update
 The repository includes manuscript, specification, simulation code, and reproducibility artifacts.
 
 Part of the Non-Resolution Reasoning (NRR) research program.  
-Program Map (series hub): https://github.com/kei-saito-research/nrr-core/blob/main/PROGRAM_MAP.md
+
+## NRR Series Hub (Start here)
+
+For the cross-paper map and current series links, start here:
+- [NRR Program Map](https://github.com/kei-saito-research/nrr-core/blob/main/PROGRAM_MAP.md)
 
 NRR is not an anti-LLM framework.  
 NRR does not replace standard LLM use.  
