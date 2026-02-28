@@ -11,6 +11,7 @@ NRR does not replace standard LLM use.
 NRR optimizes when to commit and when to defer, under explicit conditions.
 
 ## Quick links
+- arXiv: pending (pre-submission; no public URL yet)
 - manuscript (current): `manuscript/current/paper6-nrr-coupled-v16.tex`
 - specification: `spec/nrr-coupled_spec.md`
 - simulation: `repro/coupled_state_sim.py`
