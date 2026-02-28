@@ -1,0 +1,30 @@
+{
+  "config": {
+    "turns": 12,
+    "num_streams": 15,
+    "alpha": 0.1,
+    "beta_levels": [
+      0.1,
+      0.3,
+      0.5
+    ],
+    "seed_base": 20260228,
+    "conditions": [
+      "D-dependent",
+      "D-independent",
+      "D-mismatch"
+    ],
+    "patterns": [
+      "P1-n4",
+      "P2-n5",
+      "P3-n6"
+    ]
+  },
+  "contract": {
+    "success_dep_violation_reduction_beta_0_3": true,
+    "success_dep_repair_reduction_beta_0_3": true,
+    "success_mismatch_penalty_beta_0_3": true,
+    "success_independent_non_degrade_beta_0_3": true,
+    "all_indep_equivalence_pass": true
+  }
+}

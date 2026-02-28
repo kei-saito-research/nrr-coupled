@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""NRR-Coupled v3 simulation harness.
+"""NRR-Coupled v4 robust simulation.
 
-Main idea:
-- No API calls.
-- Use many seed-fixed random operator streams.
-- Compare uncoupled vs coupled under identical streams.
-- Evaluate robustness over streams (mean/min/max/std).
+Design goals:
+- Remove tautological reference trajectory dependence.
+- Evaluate cp via dependency consistency, not self-generated targets.
+- Use multiple seed-fixed random operator streams.
+
+Primary metrics:
+1) Turn-wise dependency consistency violation rate.
+2) Additional repair operator count needed after primary-only stream.
 """
 
 from __future__ import annotations
@@ -17,7 +20,7 @@ import random
 import statistics
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 Operator = Tuple[str, int]
 
@@ -27,15 +30,12 @@ class Pattern:
     name: str
     n: int
     w0: Tuple[float, ...]
-    a_dependent: Tuple[Tuple[float, ...], ...]
+    primary_targets: Tuple[int, ...]
+    a_dep: Tuple[Tuple[float, ...], ...]
 
 
 def clip(x: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, x))
-
-
-def l1_distance(a: Sequence[float], b: Sequence[float]) -> float:
-    return sum(abs(x - y) for x, y in zip(a, b))
 
 
 def zero_matrix(n: int) -> List[List[float]]:
@@ -72,9 +72,8 @@ def transfer_style_renormalize(u: Sequence[float], k: int) -> List[float]:
 
     scale = residual / s_non
     for i in range(n):
-        if i == k:
-            continue
-        out[i] = u[i] * scale
+        if i != k:
+            out[i] = u[i] * scale
 
     drift = 1.0 - sum(out)
     out[k] += drift
@@ -87,13 +86,13 @@ def update_step(
     k: int,
     alpha: float,
     beta: float,
-    a: Sequence[Sequence[float]],
+    a_model: Sequence[Sequence[float]],
     eps: float,
     umax: float,
 ) -> List[float]:
     u = list(w)
-
     delta = alpha if op == "sigma" else -alpha
+
     old_k = u[k]
     u[k] = clip(u[k] + delta, eps, umax)
     d = u[k] - old_k
@@ -102,7 +101,7 @@ def update_step(
         for i in range(len(u)):
             if i == k:
                 continue
-            coeff = a[i][k]
+            coeff = a_model[i][k]
             if coeff == 0.0:
                 continue
             u[i] = clip(u[i] + beta * coeff * d, eps, umax)
@@ -110,89 +109,187 @@ def update_step(
     return transfer_style_renormalize(u, k)
 
 
-def generate_random_stream(n: int, turns: int, seed: int) -> List[Operator]:
+def generate_stream(primary_targets: Sequence[int], turns: int, seed: int) -> List[Operator]:
     rng = random.Random(seed)
     stream: List[Operator] = []
+    ptargets = list(primary_targets)
     for _ in range(turns):
         op = "sigma" if rng.random() < 0.5 else "delta"
-        k = rng.randrange(n)
+        k = ptargets[rng.randrange(len(ptargets))]
         stream.append((op, k))
     return stream
 
 
-def rollout(
+def count_turnwise_violations(
+    prev_w: Sequence[float],
+    next_w: Sequence[float],
+    op: str,
+    target: int,
+    a_eval: Sequence[Sequence[float]],
+    tol: float,
+) -> Tuple[int, int]:
+    """Count directed-edge violations for a single turn.
+
+    For each edge i <- target where A_eval[i,target] != 0:
+      expected sign(step_i) = sign(A_eval[i,target]) * sign(op)
+    violation if observed sign contradicts expectation beyond tol.
+    """
+    sign_op = 1.0 if op == "sigma" else -1.0
+
+    violations = 0
+    opportunities = 0
+    n = len(prev_w)
+
+    for i in range(n):
+        coeff = a_eval[i][target]
+        if i == target or coeff == 0.0:
+            continue
+        opportunities += 1
+        expected = 1.0 if coeff > 0.0 else -1.0
+        expected *= sign_op
+        observed = next_w[i] - prev_w[i]
+        if abs(observed) <= tol:
+            violations += 1
+            continue
+        if observed * expected < -tol:
+            violations += 1
+
+    return violations, opportunities
+
+
+def dependent_signal(i: int, w: Sequence[float], w0: Sequence[float], a_eval: Sequence[Sequence[float]], primaries: Set[int]) -> float:
+    s = 0.0
+    for j in primaries:
+        coeff = a_eval[i][j]
+        if coeff == 0.0:
+            continue
+        s += coeff * (w[j] - w0[j])
+    return s
+
+
+def repair_operator_count(
+    w_start: Sequence[float],
     w0: Sequence[float],
+    alpha: float,
+    beta: float,
+    a_model: Sequence[Sequence[float]],
+    a_eval: Sequence[Sequence[float]],
+    primaries: Set[int],
+    eps: float,
+    umax: float,
+    signal_tol: float,
+    max_repair_ops: int,
+) -> int:
+    """Greedy repair on non-primary candidates until consistency mismatch resolves."""
+    w = list(w_start)
+    n = len(w)
+
+    dependents = [i for i in range(n) if i not in primaries]
+    ops = 0
+
+    for _ in range(max_repair_ops):
+        best_i = -1
+        best_mag = 0.0
+        best_op = "sigma"
+
+        for i in dependents:
+            sig = dependent_signal(i, w, w0, a_eval, primaries)
+            if abs(sig) <= signal_tol:
+                continue
+
+            shift_i = w[i] - w0[i]
+            # Desired shift direction follows sign(sig).
+            mismatch = shift_i * sig < -signal_tol
+            if not mismatch:
+                continue
+
+            mag = abs(sig) + abs(shift_i)
+            if mag > best_mag:
+                best_mag = mag
+                best_i = i
+                best_op = "sigma" if sig > 0 else "delta"
+
+        if best_i < 0:
+            break
+
+        w = update_step(w, best_op, best_i, alpha, beta, a_model, eps, umax)
+        ops += 1
+
+    return ops
+
+
+def run_sample(
+    pattern: Pattern,
+    condition: str,
     stream: Sequence[Operator],
     alpha: float,
     beta: float,
-    a: Sequence[Sequence[float]],
+    a_model: Sequence[Sequence[float]],
+    a_eval: Sequence[Sequence[float]],
     eps: float,
     umax: float,
-) -> List[List[float]]:
-    w = list(w0)
-    traj = [w[:]]
-    for op, k in stream:
-        w = update_step(w, op, k, alpha, beta, a, eps, umax)
-        traj.append(w[:])
-    return traj
+    step_tol: float,
+    signal_tol: float,
+    max_repair_ops: int,
+) -> Tuple[List[Dict[str, object]], Dict[str, float]]:
+    w = list(pattern.w0)
+    primaries = set(pattern.primary_targets)
 
+    per_turn_rows: List[Dict[str, object]] = []
+    total_viol = 0
+    total_opp = 0
 
-def first_convergence_turn(distances: Sequence[float], conv_eps: float) -> int:
-    for idx, d in enumerate(distances, start=1):
-        if d <= conv_eps:
-            return idx
-    return len(distances) + 1
+    for t, (op, k) in enumerate(stream, start=1):
+        next_w = update_step(w, op, k, alpha, beta, a_model, eps, umax)
+        v, o = count_turnwise_violations(w, next_w, op, k, a_eval, tol=step_tol)
+        total_viol += v
+        total_opp += o
 
+        for i in range(pattern.n):
+            per_turn_rows.append(
+                {
+                    "pattern": pattern.name,
+                    "condition": condition,
+                    "system": "coupled" if beta > 0 else "uncoupled",
+                    "beta": beta,
+                    "turn": t,
+                    "candidate": i,
+                    "weight": next_w[i],
+                    "operator": op,
+                    "target": k,
+                    "turn_violations": v,
+                    "turn_opportunities": o,
+                }
+            )
 
-def count_oscillation_sign_flips(steps: Sequence[Sequence[float]], tol: float = 1e-15) -> int:
-    if len(steps) < 2:
-        return 0
+        w = next_w
 
-    flips = 0
-    n = len(steps[0])
-    for t in range(1, len(steps)):
-        prev = steps[t - 1]
-        curr = steps[t]
-        for i in range(n):
-            if abs(prev[i]) <= tol or abs(curr[i]) <= tol:
-                continue
-            if prev[i] * curr[i] < 0.0:
-                flips += 1
-    return flips
+    viol_rate = (total_viol / total_opp) if total_opp > 0 else 0.0
 
+    repair_ops = repair_operator_count(
+        w_start=w,
+        w0=pattern.w0,
+        alpha=alpha,
+        beta=beta,
+        a_model=a_model,
+        a_eval=a_eval,
+        primaries=primaries,
+        eps=eps,
+        umax=umax,
+        signal_tol=signal_tol,
+        max_repair_ops=max_repair_ops,
+    )
 
-def summarize_system_vs_reference(
-    traj: Sequence[Sequence[float]],
-    ref_final: Sequence[float],
-    conv_eps: float,
-) -> Dict[str, float]:
-    turns = len(traj) - 1
-    n = len(traj[0])
-
-    distances = [l1_distance(traj[t], ref_final) for t in range(1, turns + 1)]
-    steps = [[traj[t][i] - traj[t - 1][i] for i in range(n)] for t in range(1, turns + 1)]
-
-    mean_dist = sum(distances) / turns
-    final_dist = distances[-1]
-    tau = first_convergence_turn(distances, conv_eps)
-    osc_count = count_oscillation_sign_flips(steps)
-    osc_rate = osc_count / float(max(1, (turns - 1) * n))
-
-    # U in [0,1] using simplex L1 upper bound 2.
-    utility_u = 1.0 - (mean_dist / 2.0)
-
-    return {
-        "utility_u": utility_u,
-        "mean_l1_dist": mean_dist,
-        "terminal_l1_dist": final_dist,
-        "convergence_turn": float(tau),
-        "oscillation_sign_flips": float(osc_count),
-        "oscillation_rate": osc_rate,
+    summary = {
+        "consistency_violation_rate": viol_rate,
+        "violations": float(total_viol),
+        "opportunities": float(total_opp),
+        "repair_ops_needed": float(repair_ops),
     }
+    return per_turn_rows, summary
 
 
-def aggregate(rows: List[Dict[str, float]], key: str) -> Dict[str, float]:
-    vals = [float(r[key]) for r in rows]
+def stats(vals: List[float]) -> Dict[str, float]:
     if not vals:
         return {"mean": 0.0, "sd": 0.0, "min": 0.0, "max": 0.0}
     return {
@@ -218,42 +315,45 @@ def build_patterns() -> List[Pattern]:
             name="P1-n4",
             n=4,
             w0=(0.25, 0.25, 0.25, 0.25),
-            a_dependent=make_dependency_matrix(4, pos=1.20, neg=-0.90, side=0.70),
+            primary_targets=(0, 1),
+            a_dep=make_dependency_matrix(4, pos=1.20, neg=-0.90, side=0.70),
         ),
         Pattern(
             name="P2-n5",
             n=5,
             w0=(0.20, 0.20, 0.20, 0.20, 0.20),
-            a_dependent=make_dependency_matrix(5, pos=1.10, neg=-0.80, side=0.65),
+            primary_targets=(0, 1, 2),
+            a_dep=make_dependency_matrix(5, pos=1.10, neg=-0.80, side=0.65),
         ),
         Pattern(
             name="P3-n6",
             n=6,
-            w0=(1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0),
-            a_dependent=make_dependency_matrix(6, pos=1.00, neg=-0.75, side=0.60),
+            w0=(1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6),
+            primary_targets=(0, 1, 2),
+            a_dep=make_dependency_matrix(6, pos=1.00, neg=-0.75, side=0.60),
         ),
     ]
 
 
-def parse_beta_levels(s: str) -> List[float]:
-    parts = [p.strip() for p in s.split(",") if p.strip()]
-    return [float(p) for p in parts]
+def parse_levels(s: str) -> List[float]:
+    return [float(x.strip()) for x in s.split(",") if x.strip()]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="NRR-Coupled v3 robust simulation")
-    parser.add_argument("--turns", type=int, default=12, help="Turns per operator stream")
-    parser.add_argument("--num-streams", type=int, default=15, help="Number of random operator streams per pattern")
-    parser.add_argument("--alpha", type=float, default=0.10, help="Update step size")
-    parser.add_argument("--beta-true", type=float, default=0.5, help="Hidden true coupling used for reference trajectory")
-    parser.add_argument("--beta-levels", type=str, default="0.1,0.3,0.5", help="Coupled beta levels")
-    parser.add_argument("--conv-eps", type=float, default=0.25, help="Convergence threshold for tau")
-    parser.add_argument("--seed-base", type=int, default=20260228, help="Base seed for stream generation")
-    parser.add_argument("--indep-eq-tol", type=float, default=1e-12, help="Tolerance for D-independent equivalence")
-    parser.add_argument("--outdir", type=str, default="repro/results", help="Output directory")
+    parser = argparse.ArgumentParser(description="NRR-Coupled v4 dependency-consistency simulation")
+    parser.add_argument("--turns", type=int, default=12)
+    parser.add_argument("--num-streams", type=int, default=15)
+    parser.add_argument("--alpha", type=float, default=0.10)
+    parser.add_argument("--beta-levels", type=str, default="0.1,0.3,0.5")
+    parser.add_argument("--seed-base", type=int, default=20260228)
+    parser.add_argument("--step-tol", type=float, default=1e-12)
+    parser.add_argument("--signal-tol", type=float, default=1e-6)
+    parser.add_argument("--max-repair-ops", type=int, default=30)
+    parser.add_argument("--indep-eq-tol", type=float, default=1e-12)
+    parser.add_argument("--outdir", type=str, default="repro/results")
     args = parser.parse_args()
 
-    beta_levels = parse_beta_levels(args.beta_levels)
+    beta_levels = parse_levels(args.beta_levels)
     conditions = ["D-dependent", "D-independent", "D-mismatch"]
     patterns = build_patterns()
 
@@ -266,126 +366,114 @@ def main() -> None:
     indep_rows: List[Dict[str, object]] = []
 
     for p_idx, pattern in enumerate(patterns):
-        a_dep = [list(r) for r in pattern.a_dependent]
-        a_indep = zero_matrix(pattern.n)
-        a_mismatch = negate_matrix(pattern.a_dependent)
+        a_dep = [list(r) for r in pattern.a_dep]
+        a_zero = zero_matrix(pattern.n)
+        a_neg = negate_matrix(pattern.a_dep)
 
         for s_idx in range(args.num_streams):
-            stream_seed = args.seed_base + 1000 * p_idx + s_idx
-            stream = generate_random_stream(pattern.n, args.turns, stream_seed)
+            seed = args.seed_base + 1000 * p_idx + s_idx
+            stream = generate_stream(pattern.primary_targets, args.turns, seed)
 
             for condition in conditions:
                 if condition == "D-dependent":
-                    a_true = a_dep
                     a_model = a_dep
+                    a_eval = a_dep
                 elif condition == "D-independent":
-                    a_true = a_indep
-                    a_model = a_indep
+                    a_model = a_zero
+                    a_eval = a_zero
                 else:
-                    a_true = a_dep
-                    a_model = a_mismatch
+                    a_model = a_neg
+                    a_eval = a_dep
 
-                ref_traj = rollout(pattern.w0, stream, args.alpha, args.beta_true, a_true, eps, umax)
-                ref_final = ref_traj[-1]
-
-                base_traj = rollout(pattern.w0, stream, args.alpha, 0.0, zero_matrix(pattern.n), eps, umax)
-                base_metrics = summarize_system_vs_reference(base_traj, ref_final, args.conv_eps)
-                base_metrics.update(
+                # Baseline: uncoupled.
+                base_turn, base_summary = run_sample(
+                    pattern=pattern,
+                    condition=condition,
+                    stream=stream,
+                    alpha=args.alpha,
+                    beta=0.0,
+                    a_model=a_zero,
+                    a_eval=a_eval,
+                    eps=eps,
+                    umax=umax,
+                    step_tol=args.step_tol,
+                    signal_tol=args.signal_tol,
+                    max_repair_ops=args.max_repair_ops,
+                )
+                per_turn_rows.extend(
+                    dict(r, stream_id=s_idx, stream_seed=seed) for r in base_turn
+                )
+                summary_rows.append(
                     {
                         "pattern": pattern.name,
                         "condition": condition,
                         "stream_id": s_idx,
-                        "stream_seed": stream_seed,
+                        "stream_seed": seed,
                         "system": "uncoupled",
                         "beta": 0.0,
+                        **base_summary,
                     }
                 )
-                summary_rows.append(base_metrics)
-
-                for t in range(1, args.turns + 1):
-                    d = l1_distance(base_traj[t], ref_final)
-                    op, target = stream[t - 1]
-                    for i in range(pattern.n):
-                        per_turn_rows.append(
-                            {
-                                "pattern": pattern.name,
-                                "condition": condition,
-                                "stream_id": s_idx,
-                                "stream_seed": stream_seed,
-                                "system": "uncoupled",
-                                "beta": 0.0,
-                                "turn": t,
-                                "candidate": i,
-                                "weight": base_traj[t][i],
-                                "distance_to_ref_final": d,
-                                "operator": op,
-                                "target": target,
-                            }
-                        )
 
                 for beta in beta_levels:
-                    cp_traj = rollout(pattern.w0, stream, args.alpha, beta, a_model, eps, umax)
-                    cp_metrics = summarize_system_vs_reference(cp_traj, ref_final, args.conv_eps)
-                    cp_metrics.update(
+                    cp_turn, cp_summary = run_sample(
+                        pattern=pattern,
+                        condition=condition,
+                        stream=stream,
+                        alpha=args.alpha,
+                        beta=beta,
+                        a_model=a_model,
+                        a_eval=a_eval,
+                        eps=eps,
+                        umax=umax,
+                        step_tol=args.step_tol,
+                        signal_tol=args.signal_tol,
+                        max_repair_ops=args.max_repair_ops,
+                    )
+                    per_turn_rows.extend(
+                        dict(r, stream_id=s_idx, stream_seed=seed) for r in cp_turn
+                    )
+                    summary_rows.append(
                         {
                             "pattern": pattern.name,
                             "condition": condition,
                             "stream_id": s_idx,
-                            "stream_seed": stream_seed,
+                            "stream_seed": seed,
                             "system": "coupled",
                             "beta": beta,
+                            **cp_summary,
                         }
                     )
-                    summary_rows.append(cp_metrics)
-
-                    for t in range(1, args.turns + 1):
-                        d = l1_distance(cp_traj[t], ref_final)
-                        op, target = stream[t - 1]
-                        for i in range(pattern.n):
-                            per_turn_rows.append(
-                                {
-                                    "pattern": pattern.name,
-                                    "condition": condition,
-                                    "stream_id": s_idx,
-                                    "stream_seed": stream_seed,
-                                    "system": "coupled",
-                                    "beta": beta,
-                                    "turn": t,
-                                    "candidate": i,
-                                    "weight": cp_traj[t][i],
-                                    "distance_to_ref_final": d,
-                                    "operator": op,
-                                    "target": target,
-                                }
-                            )
 
                     pair_rows.append(
                         {
                             "pattern": pattern.name,
                             "condition": condition,
                             "stream_id": s_idx,
-                            "stream_seed": stream_seed,
+                            "stream_seed": seed,
                             "beta": beta,
-                            "u_diff_cp_minus_base": cp_metrics["utility_u"] - base_metrics["utility_u"],
-                            "mean_l1_diff_cp_minus_base": cp_metrics["mean_l1_dist"] - base_metrics["mean_l1_dist"],
-                            "terminal_l1_diff_cp_minus_base": cp_metrics["terminal_l1_dist"] - base_metrics["terminal_l1_dist"],
-                            "tau_diff_cp_minus_base": cp_metrics["convergence_turn"] - base_metrics["convergence_turn"],
-                            "osc_rate_diff_cp_minus_base": cp_metrics["oscillation_rate"] - base_metrics["oscillation_rate"],
+                            "delta_violation_rate": cp_summary["consistency_violation_rate"]
+                            - base_summary["consistency_violation_rate"],
+                            "delta_repair_ops": cp_summary["repair_ops_needed"] - base_summary["repair_ops_needed"],
                         }
                     )
 
                     if condition == "D-independent":
+                        # Compare full trajectories from per-turn rows for strict equivalence.
+                        # Extract cp/base weights by (turn,candidate).
+                        idx_base = {(r["turn"], r["candidate"]): r["weight"] for r in base_turn}
+                        idx_cp = {(r["turn"], r["candidate"]): r["weight"] for r in cp_turn}
                         max_abs = 0.0
-                        for t in range(len(cp_traj)):
-                            for i in range(pattern.n):
-                                diff = abs(cp_traj[t][i] - base_traj[t][i])
-                                if diff > max_abs:
-                                    max_abs = diff
+                        for key, w_b in idx_base.items():
+                            w_c = idx_cp[key]
+                            d = abs(float(w_c) - float(w_b))
+                            if d > max_abs:
+                                max_abs = d
                         indep_rows.append(
                             {
                                 "pattern": pattern.name,
                                 "stream_id": s_idx,
-                                "stream_seed": stream_seed,
+                                "stream_seed": seed,
                                 "beta": beta,
                                 "max_abs_diff": max_abs,
                                 "tol": args.indep_eq_tol,
@@ -393,46 +481,48 @@ def main() -> None:
                             }
                         )
 
-    # Aggregate robustness stats over all streams x patterns.
+    # Robustness aggregate.
     agg_rows: List[Dict[str, object]] = []
     for condition in conditions:
         for beta in beta_levels:
             rows = [r for r in pair_rows if r["condition"] == condition and abs(float(r["beta"]) - beta) < 1e-12]
-            u = aggregate(rows, "u_diff_cp_minus_base")
-            tau = aggregate(rows, "tau_diff_cp_minus_base")
-            osc = aggregate(rows, "osc_rate_diff_cp_minus_base")
-            faster_rate = sum(1 for r in rows if float(r["tau_diff_cp_minus_base"]) < 0.0) / len(rows)
-            worse_u_rate = sum(1 for r in rows if float(r["u_diff_cp_minus_base"]) < 0.0) / len(rows)
+            v = [float(r["delta_violation_rate"]) for r in rows]
+            ro = [float(r["delta_repair_ops"]) for r in rows]
+            sv = stats(v)
+            sr = stats(ro)
             agg_rows.append(
                 {
                     "condition": condition,
                     "beta": beta,
                     "samples": len(rows),
-                    "u_diff_mean": u["mean"],
-                    "u_diff_sd": u["sd"],
-                    "u_diff_min": u["min"],
-                    "u_diff_max": u["max"],
-                    "tau_diff_mean": tau["mean"],
-                    "tau_diff_sd": tau["sd"],
-                    "tau_diff_min": tau["min"],
-                    "tau_diff_max": tau["max"],
-                    "osc_diff_mean": osc["mean"],
-                    "osc_diff_sd": osc["sd"],
-                    "faster_rate": faster_rate,
-                    "u_worse_rate": worse_u_rate,
+                    "delta_violation_mean": sv["mean"],
+                    "delta_violation_sd": sv["sd"],
+                    "delta_violation_min": sv["min"],
+                    "delta_violation_max": sv["max"],
+                    "delta_repair_mean": sr["mean"],
+                    "delta_repair_sd": sr["sd"],
+                    "delta_repair_min": sr["min"],
+                    "delta_repair_max": sr["max"],
+                    "repair_better_rate": sum(1 for x in ro if x < 0.0) / len(ro),
+                    "violation_better_rate": sum(1 for x in v if x < 0.0) / len(v),
                 }
             )
 
-    # Contract checks at beta=0.3
-    dep_b03 = [r for r in agg_rows if r["condition"] == "D-dependent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
-    ind_b03 = [r for r in agg_rows if r["condition"] == "D-independent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
-    mis_b03 = [r for r in agg_rows if r["condition"] == "D-mismatch" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
+    dep03 = [r for r in agg_rows if r["condition"] == "D-dependent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
+    ind03 = [r for r in agg_rows if r["condition"] == "D-independent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
+    mis03 = [r for r in agg_rows if r["condition"] == "D-mismatch" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
 
     contract = {
-        "success_dep_tau_gain_beta_0_3": float(dep_b03["tau_diff_mean"]) < 0.0,
-        "success_dep_u_gain_beta_0_3": float(dep_b03["u_diff_mean"]) > 0.0,
-        "success_mismatch_penalty_beta_0_3": float(mis_b03["u_diff_mean"]) < 0.0,
-        "success_independent_non_degrade_beta_0_3": float(ind_b03["u_diff_mean"]) >= 0.0,
+        "success_dep_violation_reduction_beta_0_3": float(dep03["delta_violation_mean"]) < 0.0,
+        "success_dep_repair_reduction_beta_0_3": float(dep03["delta_repair_mean"]) < 0.0,
+        "success_mismatch_penalty_beta_0_3": (
+            float(mis03["delta_violation_mean"]) > 0.0
+            and float(mis03["delta_repair_mean"]) > 0.0
+        ),
+        "success_independent_non_degrade_beta_0_3": (
+            float(ind03["delta_violation_mean"]) >= 0.0
+            and float(ind03["delta_repair_mean"]) >= 0.0
+        ),
         "all_indep_equivalence_pass": all(bool(r["pass"]) for r in indep_rows),
     }
 
@@ -440,7 +530,7 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
 
     write_csv(
-        outdir / "cp_v3_per_turn.csv",
+        outdir / "cp_v4_per_turn.csv",
         per_turn_rows,
         fieldnames=[
             "pattern",
@@ -452,13 +542,14 @@ def main() -> None:
             "turn",
             "candidate",
             "weight",
-            "distance_to_ref_final",
             "operator",
             "target",
+            "turn_violations",
+            "turn_opportunities",
         ],
     )
     write_csv(
-        outdir / "cp_v3_summary.csv",
+        outdir / "cp_v4_summary.csv",
         summary_rows,
         fieldnames=[
             "pattern",
@@ -467,16 +558,14 @@ def main() -> None:
             "stream_seed",
             "system",
             "beta",
-            "utility_u",
-            "mean_l1_dist",
-            "terminal_l1_dist",
-            "convergence_turn",
-            "oscillation_sign_flips",
-            "oscillation_rate",
+            "consistency_violation_rate",
+            "violations",
+            "opportunities",
+            "repair_ops_needed",
         ],
     )
     write_csv(
-        outdir / "cp_v3_pairwise.csv",
+        outdir / "cp_v4_pairwise.csv",
         pair_rows,
         fieldnames=[
             "pattern",
@@ -484,36 +573,31 @@ def main() -> None:
             "stream_id",
             "stream_seed",
             "beta",
-            "u_diff_cp_minus_base",
-            "mean_l1_diff_cp_minus_base",
-            "terminal_l1_diff_cp_minus_base",
-            "tau_diff_cp_minus_base",
-            "osc_rate_diff_cp_minus_base",
+            "delta_violation_rate",
+            "delta_repair_ops",
         ],
     )
     write_csv(
-        outdir / "cp_v3_aggregate.csv",
+        outdir / "cp_v4_aggregate.csv",
         agg_rows,
         fieldnames=[
             "condition",
             "beta",
             "samples",
-            "u_diff_mean",
-            "u_diff_sd",
-            "u_diff_min",
-            "u_diff_max",
-            "tau_diff_mean",
-            "tau_diff_sd",
-            "tau_diff_min",
-            "tau_diff_max",
-            "osc_diff_mean",
-            "osc_diff_sd",
-            "faster_rate",
-            "u_worse_rate",
+            "delta_violation_mean",
+            "delta_violation_sd",
+            "delta_violation_min",
+            "delta_violation_max",
+            "delta_repair_mean",
+            "delta_repair_sd",
+            "delta_repair_min",
+            "delta_repair_max",
+            "repair_better_rate",
+            "violation_better_rate",
         ],
     )
     write_csv(
-        outdir / "cp_v3_independent_check.csv",
+        outdir / "cp_v4_independent_check.csv",
         indep_rows,
         fieldnames=["pattern", "stream_id", "stream_seed", "beta", "max_abs_diff", "tol", "pass"],
     )
@@ -523,16 +607,14 @@ def main() -> None:
             "turns": args.turns,
             "num_streams": args.num_streams,
             "alpha": args.alpha,
-            "beta_true": args.beta_true,
             "beta_levels": beta_levels,
-            "conv_eps": args.conv_eps,
+            "seed_base": args.seed_base,
             "conditions": conditions,
             "patterns": [p.name for p in patterns],
-            "seed_base": args.seed_base,
         },
         "contract": contract,
     }
-    with (outdir / "cp_v3_report.json").open("w", encoding="utf-8") as f:
+    with (outdir / "cp_v4_report.json").open("w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
     print(json.dumps(payload, indent=2))
