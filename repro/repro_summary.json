@@ -1,0 +1,44 @@
+{
+  "config": {
+    "seeds": 30,
+    "n": 6,
+    "turns": 60,
+    "alpha": 0.08,
+    "beta": 0.6
+  },
+  "summary": {
+    "D-dependent": {
+      "u_base": 0.8888651237841445,
+      "u_cp": 1.0,
+      "u_diff_cp_minus_base": 0.11113487621585554,
+      "correction_rate_base": 0.5633333333333334,
+      "correction_rate_cp": 0.0,
+      "osc_rate_base": 0.4937037037037037,
+      "osc_rate_cp": 0.4985185185185185
+    },
+    "D-independent": {
+      "u_base": 1.0,
+      "u_cp": 1.0,
+      "u_diff_cp_minus_base": 0.0,
+      "correction_rate_base": 0.0,
+      "correction_rate_cp": 0.0,
+      "osc_rate_base": 0.4937037037037037,
+      "osc_rate_cp": 0.4937037037037037
+    },
+    "D-mismatch": {
+      "u_base": 0.8888651237841445,
+      "u_cp": 0.8981615754662009,
+      "u_diff_cp_minus_base": 0.009296451682056483,
+      "correction_rate_base": 0.5633333333333334,
+      "correction_rate_cp": 0.5027777777777778,
+      "osc_rate_base": 0.4937037037037037,
+      "osc_rate_cp": 0.49824074074074076
+    }
+  },
+  "contract": {
+    "success_1_dep_gain": true,
+    "success_2_indep_non_degrade": true,
+    "success_3_stability": false,
+    "overall_pass": false
+  }
+}
