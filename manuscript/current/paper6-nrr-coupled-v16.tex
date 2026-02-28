@@ -35,13 +35,14 @@
 
 \begin{abstract}
 This paper evaluates NRR-Coupled (cp), a client-side extension of Transfer-style updates for dependent-candidate conditions. The LLM interface is fixed (\((\sigma/\delta,\text{target})\)); only deterministic client propagation is varied. We compare uncoupled baseline (\(\beta=0\)) and coupled variants (\(\beta\in\{0.1,0.3,0.5\}\)) using 15 seed-fixed random operator streams for each of 3 patterns (\(n=4,5,6\)), with 12 turns per stream. Main metrics are (i) turn-wise dependency-consistency violation rate and (ii) additional repair operators needed after a primary-target stream. At \(\beta=0.3\), coupled updates reduce violation rate in D-dependent by 0.2123 and reduce repair operations by 0.58 on average, while D-mismatch increases violation rate by 0.2302 and repair operations by 3.31. D-independent remains exactly equivalent under strict numerical tolerance \(10^{-12}\), and its edge-based violation metric is structurally uninformative because \(A_{\text{eval}}=0\) yields zero evaluation opportunities. The results support a bounded claim: cp is beneficial when dependency structure is directionally correct and harmful when dependency signs are mis-specified.
+
+\textbf{Implementation}: A reference implementation accompanying this work is available at \url{https://github.com/kei-saito-research/nrr-coupled}.
 \end{abstract}
 
 \noindent\textbf{Keywords:} NRR-Coupled, dependency consistency, repair cost, falsifiable simulation, robustness
 
 \section{Introduction}
-\label{sec:introduction}
-This paper is one module in an ongoing Non-Resolution Reasoning (NRR) research program, not a closed endpoint. Companion papers cover foundational theory, text-to-state mapping, implementation behavior, and cross-domain transfer with distinct scopes.
+This paper is one module in an ongoing Non-Resolution Reasoning (NRR) research program, not a closed endpoint. Companion papers cover foundational theory, text-to-state mapping, implementation behavior, and cross-domain transfer with distinct scopes\cite{saito2025nrr,saito2026phi,saito2026transfer}.
 
 LLM APIs are stateless across calls, while many applications require state updates over dependent candidates. NRR-Transfer addressed independent-candidate updates; cp extends client execution to dependent settings.
 
@@ -52,7 +53,12 @@ NRR optimizes when to commit and when to defer, under explicit conditions.
 \textbf{Boundary.}
 Transfer: independent-candidate condition.
 cp: dependent-candidate condition.
-Uncoupled baseline is inherited from Transfer and not redefined.
+In this paper, uncoupled baseline means the same update pipeline with coupling disabled (\(\beta=0\)), aligned with the Transfer-style setting\cite{saito2026transfer}.
+
+\subsection{Series Alignment: Notation and Metrics}
+Notation contract: cp keeps the LLM interface fixed at \((\sigma/\delta,\text{target})\) and changes only deterministic client-side propagation, aligned with Transfer-style execution.
+Metric contract: cp evaluates dependency-consistency violation rate and additional repair-operator count under identical operator streams for uncoupled/coupled comparison.
+Boundary statement: claims are condition-bounded to declared dependency structures (D-dependent, D-independent, D-mismatch), not universal across unknown structures.
 
 Series Consistency Statement: Unsupported interpretations are never injected at a fixed evidence state. Hypothesis-set expansion is evidence-gated, and unobserved possibilities remain unresolved. Evidence in this paper is restricted to fixed simulation inputs and declared dependency structures.
 
@@ -64,7 +70,6 @@ Series Consistency Statement: Unsupported interpretations are never injected at 
 \end{enumerate}
 
 \section{Update Rule and Complexity}
-\label{sec:update_rule}
 Let \(\mathbf{w}_t\in\mathbb{R}^n\), \(\sum_i w_t^{(i)}=1\), and dependency matrix \(A\in\mathbb{R}^{n\times n}\), where \(A_{ij}\) is influence from candidate \(j\) to \(i\).
 
 Given \((o_t,k_t)\) with \(o_t\in\{\sigma,\delta\}\):
@@ -77,6 +82,10 @@ Here, \(+\alpha\) corresponds to \(\sigma\) (increase) and \(-\alpha\) correspon
 \tilde{w}^{(i)} \leftarrow \operatorname{clip}(\tilde{w}^{(i)}+\beta A_{i,k_t}(\tilde{w}^{(k_t)}-w_t^{(k_t)}),\varepsilon,u_{\max}),\ i\neq k_t.
 \]
 Renormalization is Transfer-compatible (target fixed, non-target proportional scaling).
+\[
+w_{t+1}^{(k_t)}=\tilde{w}^{(k_t)},\qquad
+w_{t+1}^{(i)}=\frac{\tilde{w}^{(i)}}{\sum_{j\neq k_t}\tilde{w}^{(j)}}\left(1-\tilde{w}^{(k_t)}\right)\ \ (i\neq k_t).
+\]
 
 Per-turn complexity (sparse):
 \[
@@ -85,7 +94,6 @@ T_{\text{turn}}=O\big(n+\deg_{\text{out}}(k_t)\big),
 with naive full-matrix upper bound \(O(n^2)\).
 
 \section{Evaluation Design}
-\label{sec:evaluation_design}
 Evaluation scores transitions against declared dependency relations, and uncoupled/coupled systems are compared under identical operator streams.
 
 \subsection{Patterns and streams}
@@ -129,9 +137,10 @@ All simulations use fixed parameters:
 \alpha=0.10,\qquad \varepsilon=10^{-6},\qquad u_{\max}=1-\varepsilon.
 \]
 Tolerance parameters are fixed as step tolerance \(10^{-12}\), signal tolerance \(10^{-6}\), and maximum repair budget \(\texttt{max\_repair\_ops}=30\).
+Initial weights are uniform within each pattern (\(w_0^{(i)}=1/n\)).
+Random stream generation uses fixed seed base \(20260228\).
 
 \section{Metrics}
-\label{sec:metrics}
 \subsection{M1: turn-wise dependency-consistency violation rate}
 For each turn with operation sign \(s_t\in\{+1,-1\}\) and target \(k_t\), for every edge \(i\leftarrow k_t\) with \(A_{\text{eval},i,k_t}\neq 0\), expected sign is
 \[
@@ -160,19 +169,20 @@ where \(V\) is violation rate and \(R\) is repair-op count.
 Negative values indicate cp improvement.
 
 \section{Falsifiable Criteria (\(\beta=0.3\))}
-\label{sec:falsifiable_criteria}
 \begin{enumerate}
   \item D-dependent: mean \(\Delta V < 0\)
   \item D-dependent: mean \(\Delta R < 0\)
   \item D-mismatch: mean \(\Delta V > 0\) and mean \(\Delta R > 0\)
-  \item D-independent: mean deltas are non-negative baseline-equivalent and strict equality check passes at \(10^{-12}\)
+  \item D-independent: exact uncoupled/coupled trajectory equivalence check passes at \(10^{-12}\)
 \end{enumerate}
 
 \section{Results}
-\label{sec:results}
 Samples per condition and beta: \(3\) patterns \(\times\) \(15\) streams = \(45\).
 
-\begin{center}
+\begin{table}[t]
+\centering
+\caption{Aggregate pairwise deltas at \(\beta=0.3\) across 45 samples per condition.}
+\label{tab:main_results}
 \begin{tabular}{@{}llcc@{}}
 \toprule
 Condition & Metric (\(\beta=0.3\)) & Mean $\pm$ SD & Min / Max \\
@@ -185,9 +195,9 @@ D-mismatch & $\Delta V$ & $0.2302 \pm 0.0669$ & $0.0833 / 0.3333$ \\
 D-mismatch & $\Delta R$ & $3.3111 \pm 6.9051$ & $-2 / 28$ \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 For D-independent, \(\Delta V=0\) co-occurs with zero evaluated edges (opportunities \(=0\)) and should be interpreted as structural equivalence/non-applicability of the edge metric, not as an additional performance gain.
-Figure~\ref{fig:vdiff} visualizes the condition-dependent shift in violation deltas, and Figure~\ref{fig:rdiff} shows the corresponding repair-cost deltas.
+Table~\ref{tab:main_results} reports the aggregate \(\beta=0.3\) results. Figure~\ref{fig:vdiff} visualizes the condition-dependent shift in violation deltas, and Figure~\ref{fig:rdiff} shows the corresponding repair-cost deltas.
 
 \begin{figure}[t]
 \centering
@@ -244,7 +254,6 @@ From `cp\_consistency\_report.json` at \(\beta=0.3\): all criteria pass.
 D-dependent improves on both metrics; D-mismatch degrades on both metrics; D-independent remains exactly equivalent.
 
 \section{Discussion}
-\label{sec:discussion}
 The central empirical pattern is conditional, not universal. In D-dependent settings, coupled propagation lowers violation rate and repair cost relative to the uncoupled baseline. This indicates that when dependency structure is directionally correct, one operator decision can maintain broader state coherence with fewer cleanup actions.
 
 The mismatch results are equally important: sign-inverted dependency matrices increase both violation rate and repair cost. This provides a falsifiable failure mode rather than a one-sided success narrative. In operational terms, cp should be treated as a structure-sensitive mechanism, not as a default improvement over uncoupled updates.
@@ -252,7 +261,6 @@ The mismatch results are equally important: sign-inverted dependency matrices in
 From a system-design perspective, the findings support the original interface hypothesis: LLM-side \((\sigma/\delta,\text{target})\) selection can remain unchanged while dependency handling is implemented client-side. This keeps semantic decision and deterministic state mechanics separated, consistent with the broader NRR design philosophy under tested conditions.
 
 \section{Limitations}
-\label{sec:limitations}
 \begin{itemize}
   \item \textbf{Repair cap}: Repair search uses \texttt{max\_repair\_ops=30}. In D-mismatch, cap-hitting cases exist, so reported \(\Delta R\) can be a lower bound on degradation magnitude.
   \item \textbf{Zero-movement handling}: The protocol counts near-zero movement (\(|\Delta w|\le\) tolerance) as violation. This is intentionally conservative and can slightly overcount violations in clipping-saturation turns.
@@ -260,16 +268,14 @@ From a system-design perspective, the findings support the original interface hy
 \end{itemize}
 
 \section{Conclusion}
-\label{sec:conclusion}
 NRR-Coupled extends the Transfer-style client update with dependency propagation while keeping the LLM interface fixed. Using dependency-consistency metrics, the method shows conditional benefits: improved coherence and lower repair burden when dependency signs are correct, and measurable degradation when they are wrong. The contribution is therefore bounded and falsifiable: cp is useful under validated dependency structure, and unsafe under mis-specified structure.
 
 \section{Reproducibility}
-\label{sec:reproducibility}
 Artifacts:
 \begin{itemize}
-  \item specification document in `spec/`
-  \item simulation script in `repro/`
-  \item reproducibility guide in `repro/`
+  \item specification document: `spec/nrr-coupled\_spec.md`
+  \item simulation script: `repro/coupled\_state\_sim.py`
+  \item reproducibility guide: `repro/README.md`
   \item result tables in `repro/results/cp\_consistency\_*.csv`
   \item contract check in `repro/results/cp\_consistency\_report.json`
 \end{itemize}
@@ -282,7 +288,7 @@ python3 repro/coupled_state_sim.py --outdir repro/results
 \section*{Acknowledgments}
 
 The author gratefully acknowledges the support of large language
-models---including Claude (Anthropic), ChatGPT and Codex (OpenAI)---for assistance in linguistic refinement,
+models---including Claude (Anthropic), ChatGPT and Codex (OpenAI), and Gemini (Google)---for their assistance in linguistic refinement,
 LaTeX formatting, and general proofreading support during the
 preparation of this manuscript.
 All concepts, arguments, and conclusions remain solely the
@@ -292,12 +298,12 @@ responsibility of the author.
 \bibitem{saito2025nrr}
 Saito, K. (2025).
 \textit{NRR-Core: Non-Resolution Reasoning as a Computational Framework for Contextual Identity and Ambiguity Preservation}.
-arXiv:2512.13478.
+\url{https://arxiv.org/abs/2512.13478}.
 
 \bibitem{saito2026phi}
 Saito, K. (2026).
 \textit{NRR-Phi: Text-to-State Mapping for Ambiguity Preservation in LLM Inference}.
-arXiv:2601.19933.
+\url{https://arxiv.org/abs/2601.19933}.
 
 \bibitem{saito2026transfer}
 Saito, K. (2026).

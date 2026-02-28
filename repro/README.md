@@ -2,7 +2,7 @@
 
 ## Scope
 This guide reproduces:
-- `manuscript/paper6-nrr-coupled-v14.tex`
+- `manuscript/current/paper6-nrr-coupled-v16.tex`
 - `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
 
@@ -50,12 +50,12 @@ See `cp_consistency_report.json` flags:
 ## 4) Build PDF
 
 ```bash
-cd manuscript
-tectonic -X compile paper6-nrr-coupled-v14.tex
+cd manuscript/current
+tectonic -X compile paper6-nrr-coupled-v16.tex
 ```
 
 Expected output:
-- `manuscript/paper6-nrr-coupled-v14.pdf`
+- `manuscript/current/paper6-nrr-coupled-v16.pdf`
 
 Interpretation notes:
 - In `D-independent`, `A_eval=0` so violation opportunities are zero; use
