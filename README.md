@@ -13,6 +13,7 @@ For the cross-paper map and current series links, start here:
 NRR is not an anti-LLM framework.  
 NRR does not replace standard LLM use.  
 NRR optimizes when to commit and when to defer, under explicit conditions.
+Series numbering policy: `paper3` is permanently skipped and never reused.
 
 ## Quick links
 - arXiv: pending (pre-submission; no public URL yet)
