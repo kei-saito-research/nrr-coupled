@@ -10,4 +10,4 @@ __pycache__/
 *.synctex.gz
 
 # Local legacy folders (not for GitHub)
-**/古い/
+**/old_local/

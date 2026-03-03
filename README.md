@@ -17,7 +17,7 @@ Series numbering policy: `paper3` is permanently skipped and never reused.
 
 ## Quick links
 - arXiv: pending (pre-submission; no public URL yet)
-- manuscript (current): `manuscript/current/paper6-nrr-coupled-v16.tex`
+- manuscript (current): `manuscript/current/paper6-nrr-coupled-v17.tex`
 - specification: `spec/nrr-coupled_spec.md`
 - simulation: `repro/coupled_state_sim.py`
 - reproducibility guide: `reproducibility.md`
@@ -35,8 +35,8 @@ nrr-coupled/
 |-- reproducibility.md
 |-- manuscript/
 |   `-- current/
-|       |-- paper6-nrr-coupled-v16.tex
-|       `-- paper6-nrr-coupled-v16.pdf
+|       |-- paper6-nrr-coupled-v17.tex
+|       `-- paper6-nrr-coupled-v17.pdf
 |-- spec/
 |   `-- nrr-coupled_spec.md
 `-- repro/
@@ -57,7 +57,7 @@ nrr-coupled/
 cd <nrr-coupled-root>
 python3 repro/coupled_state_sim.py --outdir repro/results
 cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v16.tex
+tectonic -X compile paper6-nrr-coupled-v17.tex
 ```
 
 ## License
