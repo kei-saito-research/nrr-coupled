@@ -8,7 +8,7 @@ Part of the Non-Resolution Reasoning (NRR) research program.
 ## NRR Series Hub (Start here)
 
 For the cross-paper map and current series links, start here:
-- [NRR Program Map](https://github.com/kei-saito-research/nrr-core/blob/main/PROGRAM_MAP.md)
+- [NRR Series Hub](https://github.com/kei-saito-research/nrr-series-hub)
 
 NRR is not an anti-LLM framework.  
 NRR does not replace standard LLM use.  
