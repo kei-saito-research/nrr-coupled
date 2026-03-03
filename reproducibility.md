@@ -3,8 +3,8 @@
 This repository reproduces the current cp manuscript and result artifacts.
 
 ## Manuscript
-- `manuscript/current/paper6-nrr-coupled-v17.tex`
-- `manuscript/current/paper6-nrr-coupled-v17.pdf`
+- `manuscript/current/paper6-nrr-coupled-v18.tex`
+- `manuscript/current/paper6-nrr-coupled-v18.pdf`
 
 ## Spec and Repro
 - `spec/nrr-coupled_spec.md`
@@ -23,7 +23,7 @@ python3 repro/coupled_state_sim.py --outdir repro/results
 
 ```bash
 cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v17.tex
+tectonic -X compile paper6-nrr-coupled-v18.tex
 ```
 
 ## Notes
