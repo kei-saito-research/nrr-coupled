@@ -3,6 +3,7 @@
 ## Scope
 This guide reproduces:
 - `manuscript/current/paper6-nrr-coupled-v19.tex`
+- `manuscript/current/checksums_sha256.txt`
 - `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
 
@@ -56,6 +57,7 @@ tectonic -X compile paper6-nrr-coupled-v19.tex
 
 Expected output:
 - `manuscript/current/paper6-nrr-coupled-v19.pdf`
+- Integrity manifest: `manuscript/current/checksums_sha256.txt`
 
 Interpretation notes:
 - In `D-independent`, `A_eval=0` so violation opportunities are zero; use

@@ -1,0 +1,2 @@
+8ccbe2658531af0d9a3417905b5cfca1764ba49f86824e96eef9eabe98b7abb2  paper6-nrr-coupled-v19.tex
+674d40b017f5dfeea8eadd4cadb0e47874f0bb54b976bf5a23f4e87912d53f91  paper6-nrr-coupled-v19.pdf

@@ -18,6 +18,7 @@ Series numbering policy: `paper3` is permanently skipped and never reused.
 ## Quick links
 - arXiv: pending (pre-submission; no public URL yet)
 - manuscript (current): `manuscript/current/paper6-nrr-coupled-v19.tex`
+- checksum manifest: `manuscript/current/checksums_sha256.txt`
 - specification: `spec/nrr-coupled_spec.md`
 - simulation: `repro/coupled_state_sim.py`
 - reproducibility guide: `reproducibility.md`
@@ -36,7 +37,8 @@ nrr-coupled/
 |-- manuscript/
 |   `-- current/
 |       |-- paper6-nrr-coupled-v19.tex
-|       `-- paper6-nrr-coupled-v19.pdf
+|       |-- paper6-nrr-coupled-v19.pdf
+|       `-- checksums_sha256.txt
 |-- spec/
 |   `-- nrr-coupled_spec.md
 `-- repro/
