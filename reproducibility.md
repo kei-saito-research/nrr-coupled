@@ -17,18 +17,24 @@ This repository reproduces the current cp manuscript and result artifacts.
 
 ```bash
 cd <nrr-coupled-root>
-python3 repro/coupled_state_sim.py --outdir repro/results
+bash scripts/run_repro_check.sh
 ```
+
+Default temp output:
+- `/tmp/nrr-coupled_repro_results/`
 
 ## Build PDF
 
 ```bash
-cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v19.tex
+cd <nrr-coupled-root>
+bash scripts/build_current_manuscript.sh
 ```
 
+Default temp output:
+- `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v19.pdf`
+
 ## Integrity
-- Verify current manuscript artifacts with `manuscript/current/checksums_sha256.txt`.
+- Verify current manuscript artifacts with `bash scripts/verify_current_package.sh`.
 
 ## Notes
 - In D-independent, `A_eval=0`, so edge-opportunity count is zero by construction.

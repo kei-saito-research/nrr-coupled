@@ -57,10 +57,14 @@ nrr-coupled/
 
 ```bash
 cd <nrr-coupled-root>
-python3 repro/coupled_state_sim.py --outdir repro/results
-cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v19.tex
+bash scripts/run_repro_check.sh
+bash scripts/build_current_manuscript.sh
 ```
+
+Stable review-package entrypoints:
+- `bash scripts/run_repro_check.sh`
+- `bash scripts/build_current_manuscript.sh`
+- `bash scripts/verify_current_package.sh`
 
 ## License
 
