@@ -511,6 +511,7 @@ def main() -> None:
     dep03 = [r for r in agg_rows if r["condition"] == "D-dependent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
     ind03 = [r for r in agg_rows if r["condition"] == "D-independent" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
     mis03 = [r for r in agg_rows if r["condition"] == "D-mismatch" and abs(float(r["beta"]) - 0.3) < 1e-12][0]
+    ind03_eq_rows = [r for r in indep_rows if abs(float(r["beta"]) - 0.3) < 1e-12]
 
     contract = {
         "success_dep_violation_reduction_beta_0_3": float(dep03["delta_violation_mean"]) < 0.0,
@@ -520,8 +521,9 @@ def main() -> None:
             and float(mis03["delta_repair_mean"]) > 0.0
         ),
         "success_independent_non_degrade_beta_0_3": (
-            float(ind03["delta_violation_mean"]) >= 0.0
-            and float(ind03["delta_repair_mean"]) >= 0.0
+            abs(float(ind03["delta_violation_mean"])) <= args.indep_eq_tol
+            and abs(float(ind03["delta_repair_mean"])) <= args.indep_eq_tol
+            and all(bool(r["pass"]) for r in ind03_eq_rows)
         ),
         "all_indep_equivalence_pass": all(bool(r["pass"]) for r in indep_rows),
     }

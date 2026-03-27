@@ -12,14 +12,14 @@ offline reproduction script and result artifacts used for the public cp line.
   - output root: `/tmp/nrr-coupled_repro_results/`
 - Build the current manuscript to temp output:
   - `bash scripts/build_current_manuscript.sh`
-  - output: `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v19.pdf`
+  - output: `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v21.pdf`
 - Verify the current review-package checksum manifest:
   - `bash scripts/verify_current_package.sh`
 
 ## Current review package
 
-- Main TeX: `manuscript/current/paper6-nrr-coupled-v19.tex`
-- Current PDF snapshot: `manuscript/current/paper6-nrr-coupled-v19.pdf`
+- Main TeX: `manuscript/current/paper6-nrr-coupled-v21.tex`
+- Current PDF snapshot: `manuscript/current/paper6-nrr-coupled-v21.pdf`
 - Checksum manifest: `manuscript/current/checksums_sha256.txt`
 
 ## Checksum policy
@@ -46,7 +46,7 @@ offline reproduction script and result artifacts used for the public cp line.
 
 | Artifact | Command | Output |
 |---|---|---|
-| Current manuscript build | `bash scripts/build_current_manuscript.sh` | `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v19.pdf` |
+| Current manuscript build | `bash scripts/build_current_manuscript.sh` | `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v21.pdf` |
 | Current package checksum verification | `bash scripts/verify_current_package.sh` | stdout verification for `manuscript/current/checksums_sha256.txt` |
 | Primary consistency rerun | `bash scripts/run_repro_check.sh` | `/tmp/nrr-coupled_repro_results/` |
 | Spec snapshot | N/A (tracked artifact) | `spec/nrr-coupled_spec.md` |
