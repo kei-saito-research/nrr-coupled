@@ -3,7 +3,7 @@
 ## Scope
 This guide reproduces:
 - `manuscript/current/paper6-nrr-coupled-v21.tex`
-- `manuscript/current/checksums_sha256.txt`
+- `manuscript/checksums_current_package_sha256.txt`
 - `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
 
@@ -57,7 +57,8 @@ tectonic -X compile paper6-nrr-coupled-v21.tex
 
 Expected output:
 - `manuscript/current/paper6-nrr-coupled-v21.pdf`
-- Integrity manifest: `manuscript/current/checksums_sha256.txt`
+- Active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
+- Current package manifest: `manuscript/checksums_current_package_sha256.txt`
 
 Interpretation notes:
 - In `D-independent`, `A_eval=0` so violation opportunities are zero; use
@@ -66,4 +67,4 @@ Interpretation notes:
 - Repair uses cap `max_repair_ops=30`; cap hits can understate mismatch degradation.
 
 ## 5) Note
-Transfer/integrated paper7 surfaces are not edited in this cp workflow.
+`reuse` / `NRR-Patterns` surfaces are not edited in this cp workflow.

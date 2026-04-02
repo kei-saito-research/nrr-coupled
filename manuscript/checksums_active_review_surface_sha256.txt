@@ -1,0 +1,2 @@
+4bbe272627b97aad4f4c780682f41c2898e19a7cf1533a753702d262c98dcdf6  manuscript/current/paper6-nrr-coupled-v21.tex
+3268304077eec8060cdc533b5e7af1ff2d3882fd7218db7cf121c31a2cc432c3  manuscript/current/paper6-nrr-coupled-v21.pdf

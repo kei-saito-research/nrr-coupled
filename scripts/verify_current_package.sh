@@ -2,7 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CURRENT_DIR="$ROOT/manuscript/current"
+MANIFEST="$ROOT/manuscript/checksums_current_package_sha256.txt"
 
-cd "$CURRENT_DIR"
-shasum -a 256 -c checksums_sha256.txt
+bash "$ROOT/scripts/verify_active_review_surface.sh"
+
+cd "$ROOT"
+shasum -a 256 -c "$MANIFEST"

@@ -3,7 +3,7 @@
 NRR-Coupled (cp) is a client-side extension for dependent-candidate state updates under a fixed LLM interface `(\sigma/\delta, target)`.  
 The repository includes manuscript, specification, simulation code, and reproducibility artifacts.
 
-Part of the Non-Resolution Reasoning (NRR) research program. In the current spine, this repository is the dependency-aware propagation layer in the first-principles/implementation chain, carried forward from the standalone `reuse` line (historically labeled under the local `Transfer` filename family) and upstream of Projection and integrated `paper7`.  
+Part of the Non-Resolution Reasoning (NRR) research program. In the current spine, this repository is the dependency-aware propagation layer in the first-principles/implementation chain, carried forward from the standalone `reuse` line (historically labeled under the local `Transfer` filename family) and upstream of Projection and `NRR-Patterns`.  
 
 ## NRR Series Hub (Start here)
 
@@ -18,7 +18,8 @@ Series numbering policy: `paper3` is permanently skipped and never reused.
 ## Quick links
 - arXiv: pending (pre-submission; no public URL yet)
 - manuscript (current): `manuscript/current/paper6-nrr-coupled-v21.tex`
-- checksum manifest: `manuscript/current/checksums_sha256.txt`
+- active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
+- current package manifest: `manuscript/checksums_current_package_sha256.txt`
 - specification: `spec/nrr-coupled_spec.md`
 - simulation: `repro/coupled_state_sim.py`
 - reproducibility guide: `reproducibility.md`
@@ -35,12 +36,20 @@ nrr-coupled/
 |-- requirements.txt
 |-- reproducibility.md
 |-- manuscript/
+|   |-- checksums_active_review_surface_sha256.txt
+|   |-- checksums_current_package_sha256.txt
 |   `-- current/
 |       |-- paper6-nrr-coupled-v21.tex
 |       |-- paper6-nrr-coupled-v21.pdf
-|       `-- checksums_sha256.txt
+|       `-- ...
 |-- spec/
 |   `-- nrr-coupled_spec.md
+|-- scripts/
+|   |-- README.md
+|   |-- build_current_manuscript.sh
+|   |-- run_repro_check.sh
+|   |-- verify_active_review_surface.sh
+|   `-- verify_current_package.sh
 `-- repro/
     |-- README.md
     |-- coupled_state_sim.py
@@ -64,6 +73,7 @@ bash scripts/build_current_manuscript.sh
 Stable review-package entrypoints:
 - `bash scripts/run_repro_check.sh`
 - `bash scripts/build_current_manuscript.sh`
+- `bash scripts/verify_active_review_surface.sh`
 - `bash scripts/verify_current_package.sh`
 
 ## License
