@@ -66,4 +66,4 @@ Interpretation notes:
 - Repair uses cap `max_repair_ops=30`; cap hits can understate mismatch degradation.
 
 ## 5) Note
-Transfer/Principles are not edited in this cp workflow.
+Transfer/integrated paper7 surfaces are not edited in this cp workflow.

@@ -3,7 +3,7 @@
 NRR-Coupled (cp) is a client-side extension for dependent-candidate state updates under a fixed LLM interface `(\sigma/\delta, target)`.  
 The repository includes manuscript, specification, simulation code, and reproducibility artifacts.
 
-Part of the Non-Resolution Reasoning (NRR) research program.  
+Part of the Non-Resolution Reasoning (NRR) research program. In the current spine, this repository is the dependency-aware propagation layer in the first-principles/implementation chain, carried forward from the standalone `reuse` line (historically labeled under the local `Transfer` filename family) and upstream of Projection and integrated `paper7`.  
 
 ## NRR Series Hub (Start here)
 
