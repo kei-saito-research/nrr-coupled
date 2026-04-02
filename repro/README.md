@@ -2,7 +2,7 @@
 
 ## Scope
 This guide reproduces:
-- `manuscript/current/paper6-nrr-coupled-v21.tex`
+- `manuscript/current/paper6-nrr-coupled-v22.tex`
 - `manuscript/checksums_current_package_sha256.txt`
 - `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
@@ -52,11 +52,11 @@ See `cp_consistency_report.json` flags:
 
 ```bash
 cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v21.tex
+tectonic -X compile paper6-nrr-coupled-v22.tex
 ```
 
 Expected output:
-- `manuscript/current/paper6-nrr-coupled-v21.pdf`
+- `manuscript/current/paper6-nrr-coupled-v22.pdf`
 - Active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
 - Current package manifest: `manuscript/checksums_current_package_sha256.txt`
 

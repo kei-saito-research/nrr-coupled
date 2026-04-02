@@ -12,7 +12,7 @@ offline reproduction script and result artifacts used for the public cp line.
   - output root: `/tmp/nrr-coupled_repro_results/`
 - Build the current manuscript to temp output:
   - `bash scripts/build_current_manuscript.sh`
-  - output: `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v21.pdf`
+  - output: `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v22.pdf`
 - Verify that `manuscript/current/` contains only the latest `.tex` / `.pdf` pair:
   - `bash scripts/verify_active_review_surface.sh`
 - Verify the current review-package checksum manifest:
@@ -20,8 +20,8 @@ offline reproduction script and result artifacts used for the public cp line.
 
 ## Current review package
 
-- Main TeX: `manuscript/current/paper6-nrr-coupled-v21.tex`
-- Current PDF snapshot: `manuscript/current/paper6-nrr-coupled-v21.pdf`
+- Main TeX: `manuscript/current/paper6-nrr-coupled-v22.tex`
+- Current PDF snapshot: `manuscript/current/paper6-nrr-coupled-v22.pdf`
 - Active review-surface checksum manifest: `manuscript/checksums_active_review_surface_sha256.txt`
 - Current package checksum manifest: `manuscript/checksums_current_package_sha256.txt`
 
@@ -49,7 +49,7 @@ offline reproduction script and result artifacts used for the public cp line.
 
 | Artifact | Command | Output |
 |---|---|---|
-| Current manuscript build | `bash scripts/build_current_manuscript.sh` | `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v21.pdf` |
+| Current manuscript build | `bash scripts/build_current_manuscript.sh` | `/tmp/nrr-coupled_current_build/paper6-nrr-coupled-v22.pdf` |
 | Active review-surface verification | `bash scripts/verify_active_review_surface.sh` | stdout verification for `manuscript/checksums_active_review_surface_sha256.txt` |
 | Current package checksum verification | `bash scripts/verify_current_package.sh` | stdout verification for `manuscript/checksums_current_package_sha256.txt` |
 | Primary consistency rerun | `bash scripts/run_repro_check.sh` | `/tmp/nrr-coupled_repro_results/` |

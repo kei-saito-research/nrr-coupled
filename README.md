@@ -17,7 +17,7 @@ Series numbering policy: `paper3` is permanently skipped and never reused.
 
 ## Quick links
 - arXiv: pending (pre-submission; no public URL yet)
-- manuscript (current): `manuscript/current/paper6-nrr-coupled-v21.tex`
+- manuscript (current): `manuscript/current/paper6-nrr-coupled-v22.tex`
 - active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
 - current package manifest: `manuscript/checksums_current_package_sha256.txt`
 - specification: `spec/nrr-coupled_spec.md`
@@ -39,8 +39,8 @@ nrr-coupled/
 |   |-- checksums_active_review_surface_sha256.txt
 |   |-- checksums_current_package_sha256.txt
 |   `-- current/
-|       |-- paper6-nrr-coupled-v21.tex
-|       |-- paper6-nrr-coupled-v21.pdf
+|       |-- paper6-nrr-coupled-v22.tex
+|       |-- paper6-nrr-coupled-v22.pdf
 |       `-- ...
 |-- spec/
 |   `-- nrr-coupled_spec.md
