@@ -1,15 +1,13 @@
 # NRR-Coupled Reproducibility (Dependency-Consistency Protocol)
 
 ## Scope
-This guide reproduces:
-- `manuscript/current/paper6-nrr-coupled-v22.tex`
+This guide reproduces the bundled coupled-state simulation surface:
+- `manuscript/current/paper6-nrr-coupled-v23.tex`
 - `manuscript/checksums_current_package_sha256.txt`
 - `spec/nrr-coupled_spec.md`
 - `repro/coupled_state_sim.py`
 
-Key policy:
-- No coupled-generated target references for scoring.
-- Evaluate by dependency consistency and repair cost.
+The bundled evaluation focuses on dependency consistency and repair cost.
 
 ## Environment
 - Python 3.10+
@@ -52,19 +50,18 @@ See `cp_consistency_report.json` flags:
 
 ```bash
 cd manuscript/current
-tectonic -X compile paper6-nrr-coupled-v22.tex
+tectonic -X compile paper6-nrr-coupled-v23.tex
 ```
 
 Expected output:
-- `manuscript/current/paper6-nrr-coupled-v22.pdf`
-- Active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
+- `manuscript/current/paper6-nrr-coupled-v23.pdf`
+- Current manuscript manifest: `manuscript/checksums_active_review_surface_sha256.txt`
 - Current package manifest: `manuscript/checksums_current_package_sha256.txt`
 
 Interpretation notes:
-- In `D-independent`, `A_eval=0` so violation opportunities are zero; use
-  `cp_consistency_independent_check.csv` equality checks for substantive confirmation.
+- In `D-independent`, `A_eval=0` so violation opportunities are zero; use `cp_consistency_independent_check.csv` equality checks for substantive confirmation.
 - Zero-movement under clipping saturation is conservatively counted as violation.
 - Repair uses cap `max_repair_ops=30`; cap hits can understate mismatch degradation.
 
 ## 5) Note
-`reuse` / `NRR-Patterns` surfaces are not edited in this cp workflow.
+This workflow is limited to the bundled cp manuscript, spec, simulation, and result files in this repository.

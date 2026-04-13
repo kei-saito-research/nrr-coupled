@@ -1,9 +1,8 @@
 # Scripts
 
-This directory contains the stable manuscript and reproduction wrappers for the
-current NRR-Coupled repository surface.
+This directory contains the stable manuscript and reproduction wrappers for the current NRR-Coupled repository surface.
 
-## Stable entrypoints
+## Entrypoints
 
 - `build_current_manuscript.sh`
   - builds the latest manuscript in `manuscript/current/` to a temp output directory
@@ -12,6 +11,4 @@ current NRR-Coupled repository surface.
 - `verify_active_review_surface.sh`
   - verifies that `manuscript/current/` contains only the current `.tex` / `.pdf` pair and checks `manuscript/checksums_active_review_surface_sha256.txt`
 - `verify_current_package.sh`
-  - verifies the active review surface first and then checks `manuscript/checksums_current_package_sha256.txt`
-
-These four entrypoints define the stable current-package interface.
+  - verifies the current manuscript files first and then checks `manuscript/checksums_current_package_sha256.txt`

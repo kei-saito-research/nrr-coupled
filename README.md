@@ -1,24 +1,22 @@
 # NRR-Coupled (cp): Dependency-Consistency Evaluation for Coupled State Updates
 
-NRR-Coupled (cp) is a client-side extension for dependent-candidate state updates under a fixed LLM interface `(\sigma/\delta, target)`.  
-The repository includes manuscript, specification, simulation code, and reproducibility artifacts.
+NRR-Coupled (cp) is a client-side extension for dependent-candidate state updates under a fixed LLM interface `(\sigma/\delta, target)`.
+The repository includes the manuscript, specification, simulation code, bundled results, and reproducibility artifacts for the coupled-update line.
 
-Part of the Non-Resolution Reasoning (NRR) research program. In the current spine, this repository is the dependency-aware propagation layer in the first-principles/implementation chain, carried forward from the standalone `reuse` line (historically labeled under the local `Transfer` filename family) and upstream of Projection and `NRR-Patterns`.  
+Part of the Non-Resolution Reasoning (NRR) research program. This repository presents the dependency-consistency cp line and bundles the manuscript, spec, simulation, and verification surfaces for that line.
 
 ## NRR Series Hub (Start here)
 
 For the cross-paper map and current series links, start here:
 - [NRR Series Hub](https://github.com/kei-saito-research/nrr-series-hub)
 
-NRR is not an anti-LLM framework.  
-NRR does not replace standard LLM use.  
+NRR is not an anti-LLM framework.
+NRR does not replace standard LLM use.
 NRR optimizes when to commit and when to defer, under explicit conditions.
-Series numbering policy: `paper3` is permanently skipped and never reused.
 
 ## Quick links
-- arXiv: pending (pre-submission; no public URL yet)
-- manuscript (current): `manuscript/current/paper6-nrr-coupled-v22.tex`
-- active review-surface manifest: `manuscript/checksums_active_review_surface_sha256.txt`
+- manuscript (current): `manuscript/current/paper6-nrr-coupled-v23.tex`
+- current manuscript manifest: `manuscript/checksums_active_review_surface_sha256.txt`
 - current package manifest: `manuscript/checksums_current_package_sha256.txt`
 - specification: `spec/nrr-coupled_spec.md`
 - simulation: `repro/coupled_state_sim.py`
@@ -39,8 +37,8 @@ nrr-coupled/
 |   |-- checksums_active_review_surface_sha256.txt
 |   |-- checksums_current_package_sha256.txt
 |   `-- current/
-|       |-- paper6-nrr-coupled-v22.tex
-|       |-- paper6-nrr-coupled-v22.pdf
+|       |-- paper6-nrr-coupled-v23.tex
+|       |-- paper6-nrr-coupled-v23.pdf
 |       `-- ...
 |-- spec/
 |   `-- nrr-coupled_spec.md
@@ -62,7 +60,7 @@ nrr-coupled/
         `-- cp_consistency_summary.csv
 ```
 
-## Reproduction
+## Reproducibility
 
 ```bash
 cd <nrr-coupled-root>
@@ -70,7 +68,7 @@ bash scripts/run_repro_check.sh
 bash scripts/build_current_manuscript.sh
 ```
 
-Stable review-package entrypoints:
+Primary package entrypoints:
 - `bash scripts/run_repro_check.sh`
 - `bash scripts/build_current_manuscript.sh`
 - `bash scripts/verify_active_review_surface.sh`
@@ -82,7 +80,7 @@ CC BY 4.0. See `LICENSE`.
 
 ## Contact
 
-Kei Saito  
-Independent Researcher, Japan  
-ORCID: https://orcid.org/0009-0006-4715-9176  
+Kei Saito
+Independent Researcher, Japan
+ORCID: https://orcid.org/0009-0006-4715-9176
 Email: kei.saito.research@gmail.com
